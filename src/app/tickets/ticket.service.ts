@@ -18,7 +18,6 @@ export class TicketService {
   ) {}
 
   async createTicket(ticket: Partial<Ticket>, files: File[]): Promise<string[]> {
-    // Initialize ticketData without assignedTo initially
     const ticketData: Partial<Ticket> = {
       id: '',
       title: ticket.title || '',
@@ -29,22 +28,19 @@ export class TicketService {
       createdAt: new Date()
     };
 
-    // Only add assignedTo if it’s a valid string
     if (ticket.assignedTo) {
       ticketData.assignedTo = ticket.assignedTo;
     }
 
-    // Upload files to Cloudinary if any
     if (files.length > 0) {
       const uploadPromises = files.map(file => this.uploadToCloudinary(file));
       ticketData.imageUrls = await Promise.all(uploadPromises);
     }
 
-    // Save ticket to Firestore
     const ticketRef = await addDoc(collection(this.firestore, 'tickets'), ticketData);
     ticketData.id = ticketRef.id;
 
-    return ticketData.imageUrls || []; // Return image URLs for the NgRx action
+    return ticketData.imageUrls || [];
   }
 
   private uploadToCloudinary(file: File): Promise<string> {
@@ -70,6 +66,19 @@ export class TicketService {
     const ticketsQuery = query(
       collection(this.firestore, 'tickets'),
       where('createdBy', '==', userId)
+    );
+    return from(getDocs(ticketsQuery)).pipe(
+      map(snapshot => snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Ticket)))
+    );
+  }
+
+  getTicketsByAgent(agentId: string): Observable<Ticket[]> {
+    const ticketsQuery = query(
+      collection(this.firestore, 'tickets'),
+      where('assignedTo', '==', agentId)
     );
     return from(getDocs(ticketsQuery)).pipe(
       map(snapshot => snapshot.docs.map(doc => ({

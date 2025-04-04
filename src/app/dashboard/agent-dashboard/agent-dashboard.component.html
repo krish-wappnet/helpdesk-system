@@ -1,0 +1,85 @@
+<div class="dashboard-container">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Agent Dashboard</h1>
+      <p class="dashboard-subtitle">Manage your assigned tickets</p>
+    </div>
+  
+    <div class="dashboard-divider"></div>
+  
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+  
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading tickets...</p>
+    </div>
+  
+    <!-- Kanban Board -->
+    <div *ngIf="!loading && !errorMessage" class="kanban-board">
+      <!-- Open Tickets -->
+      <div class="kanban-column" id="open" cdkDropList [cdkDropListData]="openTickets" (cdkDropListDropped)="drop($event)">
+        <h2 class="column-title">Open</h2>
+        <div class="column-content">
+          <div *ngFor="let ticket of openTickets" class="ticket-card" cdkDrag>
+            <h3 class="ticket-title">{{ ticket.title }}</h3>
+            <p class="ticket-description">{{ ticket.description }}</p>
+            <div class="ticket-meta">
+              <span class="created-by">Created by: {{ ticket.createdBy }}</span>
+              <span class="created-at">Created on: {{ ticket.createdAt | date:'medium' }}</span>
+            </div>
+            <div *ngIf="ticket.imageUrls?.length" class="ticket-images">
+              <img *ngFor="let url of ticket.imageUrls" [src]="url" alt="Ticket Image" class="ticket-image">
+            </div>
+          </div>
+          <div *ngIf="openTickets.length === 0" class="empty-column">
+            No open tickets
+          </div>
+        </div>
+      </div>
+  
+      <!-- In-Progress Tickets -->
+      <div class="kanban-column" id="in-progress" cdkDropList [cdkDropListData]="inProgressTickets" (cdkDropListDropped)="drop($event)" [cdkDropListConnectedTo]="['open', 'resolved']">
+        <h2 class="column-title">In Progress</h2>
+        <div class="column-content">
+          <div *ngFor="let ticket of inProgressTickets" class="ticket-card" cdkDrag>
+            <h3 class="ticket-title">{{ ticket.title }}</h3>
+            <p class="ticket-description">{{ ticket.description }}</p>
+            <div class="ticket-meta">
+              <span class="created-by">Created by: {{ ticket.createdBy }}</span>
+              <span class="created-at">Created on: {{ ticket.createdAt | date:'medium' }}</span>
+            </div>
+            <div *ngIf="ticket.imageUrls?.length" class="ticket-images">
+              <img *ngFor="let url of ticket.imageUrls" [src]="url" alt="Ticket Image" class="ticket-image">
+            </div>
+          </div>
+          <div *ngIf="inProgressTickets.length === 0" class="empty-column">
+            No in-progress tickets
+          </div>
+        </div>
+      </div>
+  
+      <!-- Resolved Tickets -->
+      <div class="kanban-column" id="resolved" cdkDropList [cdkDropListData]="resolvedTickets" (cdkDropListDropped)="drop($event)" [cdkDropListConnectedTo]="['open', 'in-progress']">
+        <h2 class="column-title">Resolved</h2>
+        <div class="column-content">
+          <div *ngFor="let ticket of resolvedTickets" class="ticket-card" cdkDrag>
+            <h3 class="ticket-title">{{ ticket.title }}</h3>
+            <p class="ticket-description">{{ ticket.description }}</p>
+            <div class="ticket-meta">
+              <span class="created-by">Created by: {{ ticket.createdBy }}</span>
+              <span class="created-at">Created on: {{ ticket.createdAt | date:'medium' }}</span>
+            </div>
+            <div *ngIf="ticket.imageUrls?.length" class="ticket-images">
+              <img *ngFor="let url of ticket.imageUrls" [src]="url" alt="Ticket Image" class="ticket-image">
+            </div>
+          </div>
+          <div *ngIf="resolvedTickets.length === 0" class="empty-column">
+            No resolved tickets
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

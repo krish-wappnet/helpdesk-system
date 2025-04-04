@@ -1,7 +1,7 @@
 <nav class="navbar">
     <div class="navbar-container">
       <!-- Logo -->
-      <a routerLink="/" class="navbar-logo">TicketApp</a>
+      <a routerLink="/" class="navbar-logo">Helpdesk</a>
   
       <!-- Hamburger Menu (Mobile) -->
       <button class="hamburger" (click)="toggleMenu()" [ngClass]="{ 'open': isMenuOpen }">
@@ -24,7 +24,7 @@
   
           <!-- Admin for admins only -->
           <li *ngIf="user.role === 'admin'">
-            <a routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">Admin</a>
+            <a routerLink="/dashboard/admin" routerLinkActive="active" (click)="toggleMenu()">Admin</a>
           </li>
         </ng-container>
   

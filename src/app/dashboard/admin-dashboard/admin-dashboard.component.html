@@ -1,0 +1,129 @@
+<div class="admin-dashboard-container">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Admin Dashboard</h1>
+      <p class="dashboard-subtitle">Manage tickets, users, and agents</p>
+    </div>
+  
+    <div class="dashboard-divider"></div>
+  
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+  
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading data...</p>
+    </div>
+  
+    <!-- Dashboard Content -->
+    <div *ngIf="!loading && !errorMessage" class="dashboard-content">
+      <!-- Statistics -->
+      <div class="stats-container">
+        <div class="stat-card">
+          <h3>Total Users</h3>
+          <p>{{ totalUsers }}</p>
+        </div>
+        <div class="stat-card">
+          <h3>Total Agents</h3>
+          <p>{{ totalAgents }}</p>
+        </div>
+      </div>
+  
+      <!-- Manage Tickets -->
+      <div class="section">
+        <h2 class="section-title">Manage Tickets</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Created By</th>
+              <th>Assigned To</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ticket of tickets">
+              <td>{{ ticket.title }}</td>
+              <td>{{ ticket.description }}</td>
+              <td>
+                <select [(ngModel)]="ticket.status" (change)="changeTicketStatus(ticket, ticket.status)">
+                  <option value="open">Open</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+              </td>
+              <td>{{ ticket.createdBy }}</td>
+              <td>
+                <select [(ngModel)]="ticket.assignedTo" (change)="assignTicketToAgent(ticket, ticket.assignedTo)">
+                  <option value="">Unassigned</option>
+                  <option *ngFor="let agent of agents" [value]="agent.uid">{{ agent.email }}</option>
+                </select>
+              </td>
+              <td>
+                <button class="action-button view">View</button>
+              </td>
+            </tr>
+            <tr *ngIf="tickets.length === 0">
+              <td colspan="6" class="no-data">No tickets available</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+  
+      <!-- Manage Users -->
+      <div class="section">
+        <h2 class="section-title">Manage Users</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>{{ user.email }}</td>
+              <td>
+                <select [(ngModel)]="user.role" (change)="changeUserRole(user, user.role)">
+                  <option value="user">User</option>
+                  <option value="agent">Agent</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </td>
+              <td>
+                <button class="action-button view">View</button>
+              </td>
+            </tr>
+            <tr *ngIf="users.length === 0">
+              <td colspan="3" class="no-data">No users available</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+  
+      <!-- Generate Report -->
+      <div class="section">
+        <h2 class="section-title">Generate Report</h2>
+        <button class="action-button generate" (click)="generateReport()">Generate Report</button>
+        <div *ngIf="report" class="report-content">
+          <h3>Report Summary</h3>
+          <p>Total Tickets: {{ report.totalTickets }}</p>
+          <p>Open: {{ report.open }}</p>
+          <p>In Progress: {{ report.inProgress }}</p>
+          <p>Resolved: {{ report.resolved }}</p>
+          <h4>Tickets by Agent</h4>
+          <ul>
+            <li *ngFor="let agentId of report.byAgent | keyvalue">
+              {{ getAgentEmail(agentId.key) }}: {{ agentId.value }}
+            </li>
+          </ul>
+          <button class="action-button download" (click)="downloadReport()">Download as CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
