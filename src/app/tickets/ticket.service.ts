@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, query, where, getDocs, addDoc } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, getDocs, addDoc, onSnapshot } from '@angular/fire/firestore';
 import { Ticket } from '../store/state/app.state';
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -25,7 +25,8 @@ export class TicketService {
       status: 'open',
       imageUrls: [],
       createdBy: ticket.createdBy || '',
-      createdAt: new Date()
+      createdAt: new Date(),
+      responses: [] // Initialize responses array
     };
 
     if (ticket.assignedTo) {
@@ -76,15 +77,19 @@ export class TicketService {
   }
 
   getTicketsByAgent(agentId: string): Observable<Ticket[]> {
-    const ticketsQuery = query(
-      collection(this.firestore, 'tickets'),
-      where('assignedTo', '==', agentId)
-    );
-    return from(getDocs(ticketsQuery)).pipe(
-      map(snapshot => snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Ticket)))
-    );
+    return new Observable(observer => {
+      const ticketsCollection = collection(this.firestore, 'tickets');
+      const q = query(ticketsCollection, where('assignedTo', '==', agentId));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const tickets: Ticket[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Ticket));
+        observer.next(tickets);
+      }, (error) => {
+        observer.error(error);
+      });
+      return () => unsubscribe();
+    });
   }
 }

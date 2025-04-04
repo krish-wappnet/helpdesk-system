@@ -11,7 +11,7 @@ export interface TicketState {
 
 export interface UserState {
   currentUser: User | null;
-  error?: string | null; // Optional: for storing errors
+  error?: string | null;
 }
 
 export interface Ticket {
@@ -23,6 +23,13 @@ export interface Ticket {
   createdBy: string;
   createdAt: Date;
   assignedTo?: string;
+  responses?: TicketResponse[]; // Added responses field
+}
+
+export interface TicketResponse {
+  text: string;
+  respondedBy: string;
+  timestamp: Date;
 }
 
 export interface User {

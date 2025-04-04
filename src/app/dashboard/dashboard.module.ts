@@ -5,12 +5,10 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { AgentDashboardComponent } from './agent-dashboard/agent-dashboard.component';
-import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
 import { FormsModule } from '@angular/forms';
 
 const routes: Routes = [
   { path: '', component:AgentDashboardComponent},
-  { path: 'admin', component:AdminDashboardComponent}
 ];
 
 @NgModule({
@@ -20,6 +18,6 @@ const routes: Routes = [
     DragDropModule,
     FormsModule
   ],
-  declarations: [AgentDashboardComponent, AdminDashboardComponent]
+  declarations: [AgentDashboardComponent]
 })
 export class DashboardModule {}

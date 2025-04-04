@@ -5,16 +5,22 @@ import { selectUser } from '../../store/selectors/user.selector';
 import { Observable } from 'rxjs';
 import { TicketService } from '../../tickets/ticket.service';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { Firestore, doc, updateDoc } from '@angular/fire/firestore';
+import { Firestore, doc, updateDoc, arrayUnion } from '@angular/fire/firestore';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-agent-dashboard',
-  standalone:false,
+  standalone: false,
+  // imports: [CommonModule, RouterModule, DragDropModule, FormsModule],
   templateUrl: './agent-dashboard.component.html',
   styleUrls: ['./agent-dashboard.component.css']
 })
 export class AgentDashboardComponent implements OnInit {
   user$: Observable<User | null>;
+  currentUser: User | null = null;
   openTickets: Ticket[] = [];
   inProgressTickets: Ticket[] = [];
   resolvedTickets: Ticket[] = [];
@@ -31,6 +37,7 @@ export class AgentDashboardComponent implements OnInit {
 
   ngOnInit() {
     this.user$.subscribe(user => {
+      this.currentUser = user;
       if (user && (user.role === 'agent' || user.role === 'admin')) {
         this.loadAssignedTickets(user.uid);
       } else {
@@ -43,11 +50,9 @@ export class AgentDashboardComponent implements OnInit {
     this.loading = true;
     this.errorMessage = null;
 
-    // Fetch tickets where assignedTo matches the agent's uid
     const ticketsQuery = this.ticketService.getTicketsByAgent(agentId);
     ticketsQuery.subscribe({
       next: (tickets) => {
-        // Sort tickets into respective arrays based on status
         this.openTickets = tickets.filter(ticket => ticket.status === 'open');
         this.inProgressTickets = tickets.filter(ticket => ticket.status === 'in-progress');
         this.resolvedTickets = tickets.filter(ticket => ticket.status === 'resolved');
@@ -62,10 +67,8 @@ export class AgentDashboardComponent implements OnInit {
 
   drop(event: CdkDragDrop<Ticket[]>) {
     if (event.previousContainer === event.container) {
-      // Reorder within the same column
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
-      // Move between columns
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
@@ -73,7 +76,6 @@ export class AgentDashboardComponent implements OnInit {
         event.currentIndex
       );
 
-      // Update the ticket's status in Firestore
       const ticket = event.container.data[event.currentIndex];
       const newStatus = event.container.id as 'open' | 'in-progress' | 'resolved';
       this.updateTicketStatus(ticket, newStatus);
@@ -84,12 +86,39 @@ export class AgentDashboardComponent implements OnInit {
     const ticketRef = doc(this.firestore, 'tickets', ticket.id);
     updateDoc(ticketRef, { status: newStatus })
       .then(() => {
-        ticket.status = newStatus; // Update local ticket status
+        ticket.status = newStatus;
       })
       .catch(error => {
         this.errorMessage = 'Error updating ticket status: ' + error.message;
-        // Revert the drag-and-drop if the update fails
         this.loadAssignedTickets(ticket.assignedTo!);
       });
   }
+
+  respondToTicket(ticket: Ticket, response: string) {
+    if (!response.trim()) return;
+
+    const ticketRef = doc(this.firestore, 'tickets', ticket.id);
+    const responseData = {
+      text: response,
+      respondedBy: this.currentUser?.uid || 'unknown',
+      timestamp: new Date()
+    };
+
+    updateDoc(ticketRef, {
+      responses: arrayUnion(responseData)
+    })
+      .then(() => {
+        if (!ticket.responses) ticket.responses = [];
+        ticket.responses.push(responseData);
+      })
+      .catch(error => {
+        this.errorMessage = 'Error adding response: ' + error.message;
+      });
+  }
+}
+
+export interface TicketResponse {
+  text: string;
+  respondedBy: string;
+  timestamp: Date;
 }
