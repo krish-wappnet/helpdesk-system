@@ -21,7 +21,8 @@ export class SignupComponent implements OnInit {
   ) {
     this.signupForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      role: ['', Validators.required] // Add role field with required validator
     });
   }
 
@@ -37,10 +38,12 @@ export class SignupComponent implements OnInit {
 
     this.errorMessage = null;
     this.loading = true;
-    const { email, password } = this.signupForm.value;
-    this.authService.signup(email, password)
+    const { email, password, role } = this.signupForm.value;
+    
+    // Pass the role to the signup method
+    this.authService.signup(email, password, role)
       .then(() => {
-        this.router.navigate(['/tickets']);
+        this.router.navigate(['/tickets/my-tickets']);
       })
       .catch((error: any) => {
         this.handleFirebaseError(error);
@@ -67,6 +70,8 @@ export class SignupComponent implements OnInit {
     console.error('Signup error:', error);
   }
 
+  // Getter methods for form controls
   get email() { return this.signupForm.get('email'); }
   get password() { return this.signupForm.get('password'); }
+  get role() { return this.signupForm.get('role'); }
 }

@@ -13,8 +13,7 @@ import { Auth, signInWithPopup, GoogleAuthProvider } from '@angular/fire/auth';
 export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   errorMessage: string | null = null;
-  loading = false; // For login button spinner
-  hidePassword = true; // For password visibility toggle
+  loading = false;
 
   constructor(
     private fb: FormBuilder,
@@ -39,7 +38,7 @@ export class LoginComponent implements OnInit {
     }
 
     this.errorMessage = null;
-    this.loading = true; // Show spinner
+    this.loading = true;
     const { email, password } = this.loginForm.value;
     this.authService.login(email, password)
       .then(() => {
@@ -49,13 +48,13 @@ export class LoginComponent implements OnInit {
         this.handleFirebaseError(error);
       })
       .finally(() => {
-        this.loading = false; // Hide spinner
+        this.loading = false;
       });
   }
 
   loginWithGoogle() {
     this.errorMessage = null;
-    this.loading = true; // Show spinner for Google login
+    this.loading = true;
     const provider = new GoogleAuthProvider();
     signInWithPopup(this.auth, provider)
       .then(() => {
@@ -65,7 +64,7 @@ export class LoginComponent implements OnInit {
         this.handleFirebaseError(error);
       })
       .finally(() => {
-        this.loading = false; // Hide spinner
+        this.loading = false;
       });
   }
 

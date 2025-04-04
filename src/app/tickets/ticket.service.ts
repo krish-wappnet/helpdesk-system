@@ -1,63 +1,81 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, collectionData } from '@angular/fire/firestore';
-import { HttpClient } from '@angular/common/http';
-import { Observable, firstValueFrom } from 'rxjs';
-import { cloudinaryConfig } from '../../config/env';
+import { Firestore, collection, query, where, getDocs, addDoc } from '@angular/fire/firestore';
 import { Ticket } from '../store/state/app.state';
+import { Observable, from } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { cloudinaryConfig } from '../../config/env';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TicketService {
-  private readonly cloudinaryUrl: string;
-  private readonly uploadPreset: string;
+  private cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/upload`;
 
   constructor(
     private firestore: Firestore,
     private http: HttpClient
-  ) {
-    this.cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`;
-    this.uploadPreset = cloudinaryConfig.uploadPreset;
-    console.log('Cloudinary Cloud Name:', this.cloudinaryUrl);
-    console.log('Cloudinary Upload Preset:', this.uploadPreset);
-    if (!this.uploadPreset) {
-      console.error('ERROR: Cloudinary upload preset is undefined');
+  ) {}
+
+  async createTicket(ticket: Partial<Ticket>, files: File[]): Promise<string[]> {
+    // Initialize ticketData without assignedTo initially
+    const ticketData: Partial<Ticket> = {
+      id: '',
+      title: ticket.title || '',
+      description: ticket.description || '',
+      status: 'open',
+      imageUrls: [],
+      createdBy: ticket.createdBy || '',
+      createdAt: new Date()
+    };
+
+    // Only add assignedTo if it’s a valid string
+    if (ticket.assignedTo) {
+      ticketData.assignedTo = ticket.assignedTo;
     }
+
+    // Upload files to Cloudinary if any
+    if (files.length > 0) {
+      const uploadPromises = files.map(file => this.uploadToCloudinary(file));
+      ticketData.imageUrls = await Promise.all(uploadPromises);
+    }
+
+    // Save ticket to Firestore
+    const ticketRef = await addDoc(collection(this.firestore, 'tickets'), ticketData);
+    ticketData.id = ticketRef.id;
+
+    return ticketData.imageUrls || []; // Return image URLs for the NgRx action
   }
 
-  async uploadImage(file: File): Promise<string> {
+  private uploadToCloudinary(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', this.uploadPreset);
+    formData.append('upload_preset', cloudinaryConfig.uploadPreset);
 
-    try {
-      const response = await firstValueFrom(this.http.post<any>(this.cloudinaryUrl, formData));
-      return response.secure_url;
-    } catch (error) {
-      console.error('Image upload failed:', error);
-      throw new Error('Failed to upload image to Cloudinary');
-    }
+    return this.http.post<{ url: string }>(this.cloudinaryUrl, formData)
+      .toPromise()
+      .then(response => {
+        if (!response || !response.url) {
+          throw new Error('Failed to upload file to Cloudinary: No URL returned');
+        }
+        return response.url;
+      })
+      .catch(error => {
+        console.error('Error uploading to Cloudinary:', error);
+        throw error;
+      });
   }
 
-  async createTicket(ticket: Partial<Ticket>, files: File[]): Promise<void> {
-    try {
-      const imageUrls = await Promise.all(files.map(file => this.uploadImage(file)));
-      const ticketData: Ticket = {
-        ...ticket,
-        imageUrls,
-        createdAt: new Date(),
-        status: 'open'
-      } as Ticket;
-      const ticketsCollection = collection(this.firestore, 'tickets');
-      await addDoc(ticketsCollection, ticketData);
-    } catch (error) {
-      console.error('Ticket creation failed:', error);
-      throw error;
-    }
-  }
-
-  getTickets(): Observable<Ticket[]> {
-    const ticketsCollection = collection(this.firestore, 'tickets');
-    return collectionData(ticketsCollection, { idField: 'id' }) as Observable<Ticket[]>;
+  getTicketsByUser(userId: string): Observable<Ticket[]> {
+    const ticketsQuery = query(
+      collection(this.firestore, 'tickets'),
+      where('createdBy', '==', userId)
+    );
+    return from(getDocs(ticketsQuery)).pipe(
+      map(snapshot => snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Ticket)))
+    );
   }
 }

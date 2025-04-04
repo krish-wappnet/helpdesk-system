@@ -1,51 +1,66 @@
 <div class="container">
-    <mat-card class="signup-card">
-      <div class="card-header">
-        <h1 class="card-title">Sign Up for Helpdesk</h1>
-        <p class="card-subtitle">Create your account</p>
+  <mat-card class="signup-card">
+    <div class="card-header">
+      <h1 class="card-title">Sign Up for Helpdesk</h1>
+      <p class="card-subtitle">Create your account</p>
+    </div>
+
+    <div class="card-divider"></div>
+
+    <div class="card-content">
+      <!-- Firebase Error Message -->
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
       </div>
-  
-      <div class="card-divider"></div>
-  
-      <div class="card-content">
-        <!-- Firebase Error Message -->
-        <div *ngIf="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-  
-        <!-- Email/Password Form -->
-        <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="form-container">
-          <div class="form-field">
-            <label for="email">Email</label>
-            <input id="email" type="email" formControlName="email" placeholder="Enter your email">
-            <div *ngIf="email?.touched && email?.hasError('required')" class="field-error">
-              Email is required
-            </div>
-            <div *ngIf="email?.touched && email?.hasError('email')" class="field-error">
-              Please enter a valid email address
-            </div>
+
+      <!-- Email/Password/Role Form -->
+      <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="form-container">
+        <div class="form-field">
+          <label for="email">Email</label>
+          <input id="email" type="email" formControlName="email" placeholder="Enter your email">
+          <div *ngIf="email?.touched && email?.hasError('required')" class="field-error">
+            Email is required
           </div>
-  
-          <div class="form-field">
-            <label for="password">Password</label>
-            <input id="password" type="password" formControlName="password" placeholder="Enter your password">
-            <div *ngIf="password?.touched && password?.hasError('required')" class="field-error">
-              Password is required
-            </div>
-            <div *ngIf="password?.touched && password?.hasError('minlength')" class="field-error">
-              Password must be at least 6 characters
-            </div>
+          <div *ngIf="email?.touched && email?.hasError('email')" class="field-error">
+            Please enter a valid email address
           </div>
-  
-          <button type="submit" class="signup-button" [disabled]="signupForm.invalid || loading">
-            <span *ngIf="!loading">Sign Up</span>
-            <div *ngIf="loading" class="spinner"></div>
-          </button>
-        </form>
-  
-        <div class="login-container">
-          <p class="login-text">Already have an account? <a routerLink="/login" class="login-link">Login</a></p>
         </div>
+
+        <div class="form-field">
+          <label for="password">Password</label>
+          <input id="password" type="password" formControlName="password" placeholder="Enter your password">
+          <div *ngIf="password?.touched && password?.hasError('required')" class="field-error">
+            Password is required
+          </div>
+          <div *ngIf="password?.touched && password?.hasError('minlength')" class="field-error">
+            Password must be at least 6 characters
+          </div>
+        </div>
+
+        <!-- Role Selection with Custom Styling -->
+        <div class="form-field">
+          <label for="role">Select Role</label>
+          <div class="select-wrapper">
+            <select id="role" formControlName="role">
+              <option value="" disabled selected>Select your role</option>
+              <option value="user">User</option>
+              <option value="agent">Agent</option>
+            </select>
+          </div>
+          <div *ngIf="role?.touched && role?.hasError('required')" class="field-error">
+            Role is required
+          </div>
+        </div>
+
+        <button type="submit" class="signup-button" [disabled]="signupForm.invalid || loading">
+          <span *ngIf="!loading">Sign Up</span>
+          <div *ngIf="loading" class="spinner"></div>
+        </button>
+      </form>
+
+      <div class="login-container">
+        <p class="login-text">Already have an account? <a routerLink="/login" class="login-link">Login</a></p>
       </div>
-    </mat-card>
-  </div>
+    </div>
+  </mat-card>
+</div>

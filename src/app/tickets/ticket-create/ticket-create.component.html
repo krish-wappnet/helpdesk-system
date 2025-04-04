@@ -1,0 +1,40 @@
+<div class="container">
+    <div class="ticket-create-card">
+      <div class="card-header">
+        <h1 class="card-title">Create a New Ticket</h1>
+        <p class="card-subtitle">Submit your issue or request</p>
+      </div>
+  
+      <div class="card-divider"></div>
+  
+      <div class="card-content">
+        <!-- Error Message -->
+        <div *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+  
+        <!-- Form -->
+        <form (ngSubmit)="onSubmit()" class="form-container">
+          <div class="form-field">
+            <label for="title">Title</label>
+            <input id="title" type="text" [(ngModel)]="ticket.title" name="title" placeholder="Enter ticket title" required>
+          </div>
+  
+          <div class="form-field">
+            <label for="description">Description</label>
+            <textarea id="description" [(ngModel)]="ticket.description" name="description" placeholder="Describe your issue" rows="4" required></textarea>
+          </div>
+  
+          <div class="form-field">
+            <label for="files">Attach Files (Optional)</label>
+            <input id="files" type="file" multiple (change)="onFileChange($event)" class="file-input">
+          </div>
+  
+          <button type="submit" class="submit-button" [disabled]="!ticket.title || !ticket.description || loading">
+            <span *ngIf="!loading">Submit Ticket</span>
+            <div *ngIf="loading" class="spinner"></div>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>

@@ -24,12 +24,10 @@ export class AuthGuard implements CanActivate {
     return new Promise((resolve) => {
       this.auth.onAuthStateChanged((user) => {
         if (user) {
-          // User is authenticated, check role if needed
           this.store.select(selectUser).pipe(
             take(1),
             map(userState => {
               if (userState) {
-                // Optionally check role here (e.g., for /admin route)
                 resolve(true);
               } else {
                 this.router.navigate(['/auth/login']);
@@ -38,7 +36,6 @@ export class AuthGuard implements CanActivate {
             })
           ).subscribe();
         } else {
-          // User is not authenticated, redirect to login
           this.router.navigate(['/auth/login']);
           resolve(false);
         }

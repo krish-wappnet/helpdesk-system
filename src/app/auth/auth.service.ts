@@ -22,8 +22,8 @@ export class AuthService {
           if (docSnap.exists()) {
             userData = docSnap.data() as User;
           } else {
-            // New user (e.g., from Google), set default role
-            userData = { uid: user.uid, email: user.email!, role: 'user' }; // Default to user
+            // Default to 'user' role if no document exists (this won't override signup role)
+            userData = { uid: user.uid, email: user.email!, role: 'user' };
             setDoc(userDocRef, userData);
           }
           this.store.dispatch(UserActions.loadUserSuccess({
@@ -45,13 +45,19 @@ export class AuthService {
     }
   }
 
-  async signup(email: string, password: string): Promise<void> {
+  async signup(email: string, password: string, role: string): Promise<void> {
     try {
       const result = await createUserWithEmailAndPassword(this.auth, email, password);
       const user = result.user;
       if (user) {
         const userDocRef = doc(this.firestore, 'users', user.uid);
-        await setDoc(userDocRef, { email, role: 'user' }); // Assign user role
+        // Store the selected role (user or agent) during signup
+        const userData: User = { uid: user.uid, email, role: role === 'agent' ? 'agent' : 'user' };
+        await setDoc(userDocRef, userData);
+        // Dispatch the user data to the store immediately after signup
+        this.store.dispatch(UserActions.loadUserSuccess({
+          user: { uid: user.uid, email: user.email!, role: userData.role }
+        }));
       }
     } catch (error) {
       throw error;
@@ -61,6 +67,8 @@ export class AuthService {
   async logout(): Promise<void> {
     try {
       await signOut(this.auth);
+      // Optionally clear the user from the store on logout
+      this.store.dispatch(UserActions.clearUser());
     } catch (error) {
       throw error;
     }
