@@ -10,8 +10,8 @@ import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-navbar',
-  standalone: false, // Changed to true since we're using imports
-//   imports: [CommonModule, RouterModule], // Added RouterModule for routerLink
+  standalone: false, // Changed to true
+  // imports: [CommonModule, RouterModule], // Added necessary imports
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
@@ -27,7 +27,10 @@ export class NavbarComponent implements OnInit {
     this.user$ = this.store.select(selectUser);
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Optional: Log user$ to debug role-based rendering
+    this.user$.subscribe(user => console.log('Current User:', user));
+  }
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;

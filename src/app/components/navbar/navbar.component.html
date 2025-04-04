@@ -1,43 +1,43 @@
 <nav class="navbar">
-    <div class="navbar-container">
-      <!-- Logo -->
-      <a routerLink="/" class="navbar-logo">Helpdesk</a>
-  
-      <!-- Hamburger Menu (Mobile) -->
-      <button class="hamburger" (click)="toggleMenu()" [ngClass]="{ 'open': isMenuOpen }">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
-      </button>
-  
-      <!-- Navigation Links -->
-      <ul class="nav-links" [ngClass]="{ 'open': isMenuOpen }">
-        <!-- Show these links only when user is logged in -->
-        <ng-container *ngIf="user$ | async as user">
-          <li><a routerLink="/tickets" routerLinkActive="active" (click)="toggleMenu()">Tickets</a></li>
-          <li><a routerLink="/tickets/my-tickets" routerLinkActive="active" (click)="toggleMenu()">My Tickets</a></li>
-  
-          <!-- Dashboard for agents and admins -->
-          <li *ngIf="user.role === 'agent' || user.role === 'admin'">
-            <a routerLink="/dashboard" routerLinkActive="active" (click)="toggleMenu()">Dashboard</a>
-          </li>
-  
-          <!-- Admin for admins only -->
-          <li *ngIf="user.role === 'admin'">
-            <a routerLink="/dashboard/admin" routerLinkActive="active" (click)="toggleMenu()">Admin</a>
-          </li>
-        </ng-container>
-  
-        <!-- Auth Buttons -->
-        <li class="auth-buttons">
-          <ng-container *ngIf="!(user$ | async)">
-            <a routerLink="/auth/login" routerLinkActive="active" (click)="toggleMenu()" class="auth-link">Login</a>
-            <a routerLink="/auth/signup" routerLinkActive="active" (click)="toggleMenu()" class="auth-link signup">Signup</a>
-          </ng-container>
-          <ng-container *ngIf="user$ | async">
-            <button class="logout-button" (click)="logout()">Logout</button>
-          </ng-container>
+  <div class="navbar-container">
+    <!-- Logo -->
+    <a routerLink="/" class="navbar-logo">Helpdesk</a>
+
+    <!-- Hamburger Menu (Mobile) -->
+    <button class="hamburger" (click)="toggleMenu()" [ngClass]="{ 'open': isMenuOpen }">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+
+    <!-- Navigation Links -->
+    <ul class="nav-links" [ngClass]="{ 'open': isMenuOpen }">
+      <!-- Show these links only when user is logged in -->
+      <ng-container *ngIf="user$ | async as user">
+        <li><a routerLink="/tickets" routerLinkActive="active" (click)="toggleMenu()">Tickets</a></li>
+        <li><a routerLink="/tickets/my-tickets" routerLinkActive="active" (click)="toggleMenu()">My Tickets</a></li>
+
+        <!-- Dashboard for agents and admins -->
+        <li *ngIf="user.role === 'agent' || user.role === 'admin'">
+          <a routerLink="/dashboard" routerLinkActive="active" (click)="toggleMenu()">Dashboard</a>
         </li>
-      </ul>
-    </div>
-  </nav>
+
+        <!-- Admin for admins only -->
+        <li *ngIf="user.role === 'admin'">
+          <a routerLink="/admin" routerLinkActive="active" (click)="toggleMenu()">Admin</a>
+        </li>
+      </ng-container>
+
+      <!-- Auth Buttons -->
+      <li class="auth-buttons">
+        <ng-container *ngIf="!(user$ | async)">
+          <a routerLink="/auth/login" routerLinkActive="active" (click)="toggleMenu()" class="auth-link">Login</a>
+          <a routerLink="/auth/signup" routerLinkActive="active" (click)="toggleMenu()" class="auth-link signup">Signup</a>
+        </ng-container>
+        <ng-container *ngIf="user$ | async">
+          <button class="logout-button" (click)="logout()">Logout</button>
+        </ng-container>
+      </li>
+    </ul>
+  </div>
+</nav>
