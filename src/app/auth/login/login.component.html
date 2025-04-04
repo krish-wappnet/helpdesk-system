@@ -1,0 +1,68 @@
+<div class="container">
+    <mat-card class="login-card">
+      <div class="card-header">
+        <h1 class="card-title">Login to Helpdesk</h1>
+        <p class="card-subtitle">Access your tickets and support</p>
+      </div>
+  
+      <div class="card-divider"></div>
+  
+      <div class="card-content">
+        <!-- Firebase Error Message -->
+        <div *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
+  
+        <!-- Email/Password Form -->
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form-container">
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input id="email" type="email" formControlName="email" placeholder="Enter your email">
+            <div *ngIf="email?.touched && email?.hasError('required')" class="field-error">
+              Email is required
+            </div>
+            <div *ngIf="email?.touched && email?.hasError('email')" class="field-error">
+              Please enter a valid email address
+            </div>
+          </div>
+  
+          <div class="form-field">
+            <label for="password">Password</label>
+            <input id="password" type="password" formControlName="password" placeholder="Enter your password">
+            <div *ngIf="password?.touched && password?.hasError('required')" class="field-error">
+              Password is required
+            </div>
+            <div *ngIf="password?.touched && password?.hasError('minlength')" class="field-error">
+              Password must be at least 6 characters
+            </div>
+          </div>
+  
+          <div class="forgot-password">
+            <a routerLink="/forgot-password">Forgot password?</a>
+          </div>
+  
+          <button type="submit" class="login-button" [disabled]="loginForm.invalid || loading">
+            <span *ngIf="!loading">Login</span>
+            <div *ngIf="loading" class="spinner"></div>
+          </button>
+        </form>
+  
+        <div class="divider">
+          <span>or</span>
+        </div>
+  
+        <!-- Google OAuth Button -->
+        <button class="google-button" (click)="loginWithGoogle()" [disabled]="loading">
+          <span class="button-content">
+            <img src="https://imgs.search.brave.com/ltfxDO4PPs2lbA3u1g3sNDTHFxpbSTzelrNV7SuUMkI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9kZXZl/bG9wZXJzLmdvb2ds/ZS5jb20vc3RhdGlj/L2lkZW50aXR5L2lt/YWdlcy9icmFuZGlu/Z19ndWlkZWxpbmVf/c2FtcGxlX2x0X3Jk/X3NsLnN2Zw" alt="Google" class="google-icon">
+            <span *ngIf="!loading">Login with Google</span>
+            <div *ngIf="loading" class="spinner"></div>
+          </span>
+        </button>
+  
+        <div class="sign-up-container">
+          <p class="sign-up-text">Don't have an account? <a routerLink="/auth/signup" class="sign-up-link">Sign up</a></p>
+        </div>
+      </div>
+    </mat-card>
+  </div>
