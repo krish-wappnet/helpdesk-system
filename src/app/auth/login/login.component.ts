@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../auth.service';
-import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { AppState } from '../../store/state/app.state';
 import { Auth, signInWithPopup, GoogleAuthProvider } from '@angular/fire/auth';
 
 @Component({
   selector: 'app-login',
-  standalone: false,
+  standalone:false,
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -18,7 +19,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router,
+    private store: Store<AppState>,
     private auth: Auth
   ) {
     this.loginForm = this.fb.group({
@@ -31,8 +32,8 @@ export class LoginComponent implements OnInit {
     this.loginForm.reset();
   }
 
-  onSubmit() {
-    if (this.loginForm.invalid) {
+  async onSubmit() {
+    if (this.loginForm.invalid || this.loading) {
       this.loginForm.markAllAsTouched();
       return;
     }
@@ -40,32 +41,31 @@ export class LoginComponent implements OnInit {
     this.errorMessage = null;
     this.loading = true;
     const { email, password } = this.loginForm.value;
-    this.authService.login(email, password)
-      .then(() => {
-        this.router.navigate(['/tickets']);
-      })
-      .catch((error: any) => {
-        this.handleFirebaseError(error);
-      })
-      .finally(() => {
-        this.loading = false;
-      });
+
+    try {
+      await this.authService.login(email, password);
+      // Redirection handled by AuthService via onAuthStateChanged
+    } catch (error: any) {
+      this.handleFirebaseError(error);
+    } finally {
+      this.loading = false;
+    }
   }
 
-  loginWithGoogle() {
+  async loginWithGoogle() {
+    if (this.loading) return;
+
     this.errorMessage = null;
     this.loading = true;
     const provider = new GoogleAuthProvider();
-    signInWithPopup(this.auth, provider)
-      .then(() => {
-        this.router.navigate(['/tickets']);
-      })
-      .catch((error: any) => {
-        this.handleFirebaseError(error);
-      })
-      .finally(() => {
-        this.loading = false;
-      });
+    try {
+      await signInWithPopup(this.auth, provider);
+      // Redirection handled by AuthService via onAuthStateChanged
+    } catch (error: any) {
+      this.handleFirebaseError(error);
+    } finally {
+      this.loading = false;
+    }
   }
 
   private handleFirebaseError(error: any) {

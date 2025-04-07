@@ -1,39 +1,58 @@
 <div class="container">
-    <div class="tickets-card">
-      <div class="card-header">
-        <h1 class="card-title">My Tickets</h1>
-        <p class="card-subtitle">View your submitted tickets</p>
+  <div class="tickets-card">
+    <div class="card-header">
+      <h1 class="card-title">My Tickets</h1>
+      <p class="card-subtitle">View your submitted tickets</p>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (input)="onSearch($any($event.target).value)"
+        placeholder="Search tickets by title or description"
+        class="search-input"
+      />
+    </div>
+
+    <div class="card-divider"></div>
+
+    <div class="card-content">
+      <!-- Loading State -->
+      <div *ngIf="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading tickets...</p>
       </div>
-  
-      <div class="card-divider"></div>
-  
-      <div class="card-content">
-        <!-- Loading State -->
-        <div *ngIf="loading" class="loading">
-          <div class="spinner"></div>
-          <p>Loading tickets...</p>
-        </div>
-  
-        <!-- No Tickets -->
-        <div *ngIf="!loading && tickets.length === 0" class="no-tickets">
-          <p>You haven't submitted any tickets yet.</p>
-          <a routerLink="/tickets" class="create-link">Create a new ticket</a>
-        </div>
-  
-        <!-- Tickets List -->
-        <div *ngIf="!loading && tickets.length > 0" class="tickets-list">
-          <div *ngFor="let ticket of tickets" class="ticket-item">
+
+      <!-- No Tickets -->
+      <div *ngIf="!loading && tickets.length === 0" class="no-tickets">
+        <p>No tickets found.</p>
+        <a routerLink="/tickets" class="create-link">Create a new ticket</a>
+      </div>
+
+      <!-- Tickets List -->
+      <div *ngIf="!loading && tickets.length > 0" class="tickets-list">
+        <div *ngFor="let ticket of tickets" class="ticket-card">
+          <div class="ticket-header">
             <h3 class="ticket-title">{{ ticket.title }}</h3>
-            <p class="ticket-description">{{ ticket.description }}</p>
-            <div class="ticket-meta">
-              <span class="status" [ngClass]="ticket.status">{{ ticket.status | titlecase }}</span>
-              <span class="created-at">Created on {{ ticket.createdAt | date:'medium' }}</span>
-            </div>
-            <div *ngIf="ticket.imageUrls?.length" class="ticket-images">
-              <img *ngFor="let url of ticket.imageUrls" [src]="url" alt="Ticket Image" class="ticket-image">
+            <span class="status" [ngClass]="ticket.status">{{ ticket.status | titlecase }}</span>
+          </div>
+          <p class="ticket-description">{{ ticket.description }}</p>
+          <div class="ticket-meta">
+            <span class="created-at">Created on {{ ticket.createdAt | date:'medium' }}</span>
+          </div>
+          <div *ngIf="ticket.imageUrls?.length" class="ticket-images">
+            <div *ngFor="let url of ticket.imageUrls" class="image-container">
+              <div *ngIf="imageLoading[url]" class="image-spinner"></div>
+              <img
+                [src]="url"
+                alt="Ticket Image"
+                class="ticket-image"
+                (load)="onImageLoad(url)"
+                (error)="onImageError(url)"
+                [ngClass]="{ 'hidden': imageLoading[url] }"
+              />
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>

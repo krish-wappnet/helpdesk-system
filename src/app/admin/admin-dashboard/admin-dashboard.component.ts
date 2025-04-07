@@ -78,18 +78,29 @@ export class AdminDashboardComponent implements OnInit {
       id: doc.id,
       ...doc.data()
     } as Ticket));
+    console.log('Loaded tickets:', this.tickets);
   }
 
   assignTicketToAgent(ticket: Ticket, agentId: string | undefined) {
-    // If agentId is undefined, unassign the ticket
-    const ticketRef = doc(this.firestore, 'tickets', ticket.id);
+    // Find the original ticket from this.tickets to ensure we have the correct ID
+    const originalTicket = this.tickets.find(t => t === ticket || t.id === ticket.id);
+    if (!originalTicket || !originalTicket.id) {
+      this.errorMessage = 'Cannot assign ticket: Ticket ID is missing or invalid';
+      console.error('Invalid ticket:', ticket, 'Original ticket:', originalTicket);
+      return;
+    }
+  
+    const ticketRef = doc(this.firestore, 'tickets', originalTicket.id);
     const updateData = agentId ? { assignedTo: agentId } : { assignedTo: null };
     updateDoc(ticketRef, updateData)
       .then(() => {
-        ticket.assignedTo = agentId || undefined;
+        originalTicket.assignedTo = agentId || undefined;
+        this.errorMessage = null;
+        console.log('Ticket assigned successfully:', originalTicket);
       })
       .catch(error => {
         this.errorMessage = 'Error assigning ticket: ' + error.message;
+        console.error('Firestore error:', error);
       });
   }
 
@@ -105,7 +116,9 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   changeUserRole(user: User, role: 'user' | 'agent' | 'admin') {
+    console.log(user)
     const userRef = doc(this.firestore, 'users', user.uid);
+    
     updateDoc(userRef, { role })
       .then(() => {
         user.role = role;

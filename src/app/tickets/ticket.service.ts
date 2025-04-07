@@ -5,12 +5,14 @@ import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { cloudinaryConfig } from '../../config/env';
+import { firebaseConfig } from '../environment/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TicketService {
   private cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/upload`;
+  private searchUrl = `https://us-central1-${firebaseConfig.projectId}.cloudfunctions.net/searchTickets`;
 
   constructor(
     private firestore: Firestore,
@@ -90,6 +92,12 @@ export class TicketService {
         observer.error(error);
       });
       return () => unsubscribe();
+    });
+  }
+
+  searchTickets(query: string, userId: string): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(this.searchUrl, {
+      params: { q: query, userId },
     });
   }
 }
