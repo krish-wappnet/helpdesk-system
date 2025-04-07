@@ -8,7 +8,7 @@ import { TicketService } from '../../tickets/ticket.service';
 
 @Component({
   selector: 'app-admin-dashboard',
-  standalone:false,
+  standalone: false,
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.css']
 })
@@ -22,6 +22,28 @@ export class AdminDashboardComponent implements OnInit {
   loading = false;
   errorMessage: string | null = null;
   report: { totalTickets: number, open: number, inProgress: number, resolved: number, byAgent: { [key: string]: number } } | null = null;
+
+  // Pagination for Tickets
+  ticketPage = 1;
+  ticketsPerPage = 5;
+  get paginatedTickets(): Ticket[] {
+    const start = (this.ticketPage - 1) * this.ticketsPerPage;
+    return this.tickets.slice(start, start + this.ticketsPerPage);
+  }
+  get totalTicketPages(): number {
+    return Math.ceil(this.tickets.length / this.ticketsPerPage);
+  }
+
+  // Pagination for Users
+  userPage = 1;
+  usersPerPage = 5;
+  get paginatedUsers(): User[] {
+    const start = (this.userPage - 1) * this.usersPerPage;
+    return this.users.slice(start, start + this.usersPerPage);
+  }
+  get totalUserPages(): number {
+    return Math.ceil(this.users.length / this.usersPerPage);
+  }
 
   constructor(
     private store: Store<AppState>,
@@ -74,22 +96,34 @@ export class AdminDashboardComponent implements OnInit {
   async loadTickets() {
     const ticketsQuery = query(collection(this.firestore, 'tickets'));
     const snapshot = await getDocs(ticketsQuery);
-    this.tickets = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Ticket));
+    this.tickets = snapshot.docs.map(doc => {
+      const ticketData = doc.data();
+      // Explicitly ensure id is set to the Firestore document ID
+      const ticket: Ticket = {
+        id: doc.id, // This should be the Firestore document ID
+        title: ticketData['title'] || '',
+        description: ticketData['description'] || '',
+        status: ticketData['status'] || 'open',
+        createdBy: ticketData['createdBy'] || '',
+        assignedTo: ticketData['assignedTo'] || undefined,
+        createdAt: ticketData['createdAt']?.toDate() || new Date(),
+        imageUrls: ticketData['imageUrls'] || [],
+        responses: ticketData['responses'] || [],
+      };
+      console.log('Mapped ticket:', ticket); // Debug log
+      return ticket;
+    });
     console.log('Loaded tickets:', this.tickets);
   }
 
   assignTicketToAgent(ticket: Ticket, agentId: string | undefined) {
-    // Find the original ticket from this.tickets to ensure we have the correct ID
-    const originalTicket = this.tickets.find(t => t === ticket || t.id === ticket.id);
+    const originalTicket = this.tickets.find(t => t.id === ticket.id);
     if (!originalTicket || !originalTicket.id) {
       this.errorMessage = 'Cannot assign ticket: Ticket ID is missing or invalid';
       console.error('Invalid ticket:', ticket, 'Original ticket:', originalTicket);
       return;
     }
-  
+
     const ticketRef = doc(this.firestore, 'tickets', originalTicket.id);
     const updateData = agentId ? { assignedTo: agentId } : { assignedTo: null };
     updateDoc(ticketRef, updateData)
@@ -116,9 +150,7 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   changeUserRole(user: User, role: 'user' | 'agent' | 'admin') {
-    console.log(user)
     const userRef = doc(this.firestore, 'users', user.uid);
-    
     updateDoc(userRef, { role })
       .then(() => {
         user.role = role;
@@ -173,5 +205,21 @@ export class AdminDashboardComponent implements OnInit {
   getAgentEmail(agentId: string): string {
     const agent = this.users.find(u => u.uid === agentId);
     return agent ? agent.email : agentId;
+  }
+
+  prevTicketPage() {
+    if (this.ticketPage > 1) this.ticketPage--;
+  }
+
+  nextTicketPage() {
+    if (this.ticketPage < this.totalTicketPages) this.ticketPage++;
+  }
+
+  prevUserPage() {
+    if (this.userPage > 1) this.userPage--;
+  }
+
+  nextUserPage() {
+    if (this.userPage < this.totalUserPages) this.userPage++;
   }
 }

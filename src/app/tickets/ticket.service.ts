@@ -21,7 +21,6 @@ export class TicketService {
 
   async createTicket(ticket: Partial<Ticket>, files: File[]): Promise<string[]> {
     const ticketData: Partial<Ticket> = {
-      id: '',
       title: ticket.title || '',
       description: ticket.description || '',
       status: 'open',
@@ -30,19 +29,18 @@ export class TicketService {
       createdAt: new Date(),
       responses: [] // Initialize responses array
     };
-
+  
     if (ticket.assignedTo) {
       ticketData.assignedTo = ticket.assignedTo;
     }
-
+  
     if (files.length > 0) {
       const uploadPromises = files.map(file => this.uploadToCloudinary(file));
       ticketData.imageUrls = await Promise.all(uploadPromises);
     }
-
+  
     const ticketRef = await addDoc(collection(this.firestore, 'tickets'), ticketData);
-    ticketData.id = ticketRef.id;
-
+    // No need to set ticketData.id here; Firestore uses the document ID
     return ticketData.imageUrls || [];
   }
 
@@ -83,10 +81,22 @@ export class TicketService {
       const ticketsCollection = collection(this.firestore, 'tickets');
       const q = query(ticketsCollection, where('assignedTo', '==', agentId));
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const tickets: Ticket[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Ticket));
+        const tickets: Ticket[] = snapshot.docs.map(doc => {
+          const ticketData = doc.data();
+          const ticket: Ticket = {
+            id: doc.id, // Firestore document ID takes priority
+            title: ticketData['title'] || '',
+            description: ticketData['description'] || '',
+            status: ticketData['status'] || 'open',
+            createdBy: ticketData['createdBy'] || '',
+            assignedTo: ticketData['assignedTo'] || undefined,
+            createdAt: ticketData['createdAt']?.toDate() || new Date(),
+            imageUrls: ticketData['imageUrls'] || [],
+            responses: ticketData['responses'] || [],
+          };
+          console.log('Mapped ticket in getTicketsByAgent:', ticket); // Debug log
+          return ticket;
+        });
         observer.next(tickets);
       }, (error) => {
         observer.error(error);

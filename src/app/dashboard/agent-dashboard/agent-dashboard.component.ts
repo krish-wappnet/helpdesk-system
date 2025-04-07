@@ -6,15 +6,10 @@ import { Observable } from 'rxjs';
 import { TicketService } from '../../tickets/ticket.service';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Firestore, doc, updateDoc, arrayUnion } from '@angular/fire/firestore';
-import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-agent-dashboard',
   standalone: false,
-  // imports: [CommonModule, RouterModule, DragDropModule, FormsModule],
   templateUrl: './agent-dashboard.component.html',
   styleUrls: ['./agent-dashboard.component.css']
 })
@@ -50,9 +45,9 @@ export class AgentDashboardComponent implements OnInit {
     this.loading = true;
     this.errorMessage = null;
 
-    const ticketsQuery = this.ticketService.getTicketsByAgent(agentId);
-    ticketsQuery.subscribe({
+    this.ticketService.getTicketsByAgent(agentId).subscribe({
       next: (tickets) => {
+        console.log('Received tickets in loadAssignedTickets:', tickets);
         this.openTickets = tickets.filter(ticket => ticket.status === 'open');
         this.inProgressTickets = tickets.filter(ticket => ticket.status === 'in-progress');
         this.resolvedTickets = tickets.filter(ticket => ticket.status === 'resolved');
@@ -78,24 +73,41 @@ export class AgentDashboardComponent implements OnInit {
 
       const ticket = event.container.data[event.currentIndex];
       const newStatus = event.container.id as 'open' | 'in-progress' | 'resolved';
+      console.log('Dropping ticket:', ticket, 'New status:', newStatus);
       this.updateTicketStatus(ticket, newStatus);
     }
   }
 
   updateTicketStatus(ticket: Ticket, newStatus: 'open' | 'in-progress' | 'resolved') {
+    if (!ticket.id) {
+      this.errorMessage = 'Cannot update ticket: Ticket ID is missing';
+      console.error('Invalid ticket ID:', ticket);
+      return;
+    }
+
     const ticketRef = doc(this.firestore, 'tickets', ticket.id);
     updateDoc(ticketRef, { status: newStatus })
       .then(() => {
         ticket.status = newStatus;
+        console.log('Ticket status updated:', ticket);
       })
       .catch(error => {
         this.errorMessage = 'Error updating ticket status: ' + error.message;
-        this.loadAssignedTickets(ticket.assignedTo!);
+        console.error('Firestore error:', error);
+        if (ticket.assignedTo) {
+          this.loadAssignedTickets(ticket.assignedTo);
+        }
       });
   }
 
   respondToTicket(ticket: Ticket, response: string) {
     if (!response.trim()) return;
+
+    if (!ticket.id) {
+      this.errorMessage = 'Cannot respond to ticket: Ticket ID is missing';
+      console.error('Invalid ticket ID:', ticket);
+      return;
+    }
 
     const ticketRef = doc(this.firestore, 'tickets', ticket.id);
     const responseData = {
@@ -110,9 +122,11 @@ export class AgentDashboardComponent implements OnInit {
       .then(() => {
         if (!ticket.responses) ticket.responses = [];
         ticket.responses.push(responseData);
+        console.log('Response added:', responseData);
       })
       .catch(error => {
         this.errorMessage = 'Error adding response: ' + error.message;
+        console.error('Firestore error:', error);
       });
   }
 }
